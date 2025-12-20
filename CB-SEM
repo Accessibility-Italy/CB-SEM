@@ -1,3 +1,16 @@
+install.packages("dplyr")
+install.packages("lavaan")
+install.packages("lavaanPlot")
+install.packages("psych")
+install.packages("paran")
+install.packages("semTools")
+install.packages("tidyverse")
+install.packages("performance")
+install.packages("psych")
+install.packages("RNOmni")
+install.packages("moments")
+
+
 library(dplyr)
 library(lavaan)
 library(lavaanPlot)
@@ -7,6 +20,8 @@ library(semTools)
 library(tidyverse)
 library(performance)
 library(psych)
+library(RNOmni)
+library(moments)
 
 # (ISTAT, 2023)
 
@@ -16,11 +31,11 @@ datiR_2023 <- read.delim(path, header = TRUE, stringsAsFactors = FALSE, check.na
 
 
 avq_clean <- datiR_2023 %>%
-  mutate(across(c(TRAF, PARCH ,ILLSTR, CRIM),
+  mutate(across(c(TRAF, PARCH),
                 ~ ifelse(. == 5, NA, .)))
 
-avq_clean[c("FARMA", "PRSOC", "UFFPO", "POLICE", "UFFCOM", "MERCAT", "SMERC")] <- 
-  lapply(avq_clean[c("FARMA", "PRSOC", "UFFPO", "POLICE", "UFFCOM", "MERCAT", "SMERC")], 
+avq_clean[c("FARMA", "PRSOC", "UFFPO", "POLICE", "UFFCOM", "MERCAT", "SMERC")] <-
+  lapply(avq_clean[c("FARMA", "PRSOC", "UFFPO", "POLICE", "UFFCOM", "MERCAT", "SMERC")],
          function(x) ifelse(x == 4, 0, 4 - x))
 
 
@@ -59,8 +74,6 @@ avq_scaled <- avq_scaled %>%
   ))
 
 
-
-
 invert_then_normalize <- function(x, min_val = 1, max_val = 6) {
   if (all(is.na(x))) return(rep(NA, length(x)))
   
@@ -83,8 +96,9 @@ normalize <- function(x) {
 }
 
 avq_scaled <- avq_scaled %>%
-  mutate(across(c(PUNTIFI10, SF11, SF13, SF14, PUNTIFI8, PUNTIFI1, ILLSTR,  CRIM, TRAF, PARCH,FARMA, PRSOC, UFFPO, POLICE, UFFCOM, MERCAT, SMERC ), 
+  mutate(across(c(PUNTIFI10, SF11, SF13, SF14, PUNTIFI8,  CRIM, PUNTIFI1, TRAF, PARCH, FARMA, PRSOC, UFFPO, POLICE, UFFCOM, MERCAT, SMERC ),
                 normalize, .names = "norm_{col}"))
+
 
 avq_scaled$Connection <- rowMeans(avq_scaled[, c( "norm_inv_COLLEG", "norm_inv_COLCO", "norm_inv_COLCOM")], na.rm = TRUE)
 avq_scaled$IND_CLEAN <- rowMeans(avq_scaled[, c("norm_inv_PULIZ", "norm_inv_PULMT", "norm_inv_PULSTR")], na.rm = TRUE)
@@ -94,9 +108,10 @@ avq_scaled$IND_SEATS <- rowMeans(avq_scaled[, c("norm_inv_POSSE", "norm_inv_SEDM
 avq_scaled$IND_WAITING <- rowMeans(avq_scaled[, c("norm_inv_COMOF", "norm_inv_ATTMT", "norm_inv_COMAT")], na.rm = TRUE)
 avq_scaled$IND_TIME <- rowMeans(avq_scaled[, c("norm_inv_COMOR", "norm_inv_ORAMT", "norm_inv_COMORA")], na.rm = TRUE)
 avq_scaled$IND_COST <- rowMeans(avq_scaled[, c("norm_inv_CPSBI", "norm_inv_CBMT", "norm_inv_COBIG")], na.rm = TRUE)
-
+avq_scaled$IND_FREQUENCY <- rowMeans(avq_scaled[, c("norm_inv_FCORS", "norm_inv_FRCMT", "norm_inv_FRTRE")], na.rm = TRUE)
 
 rename_vec <- c(
+  FREQUENCY = "IND_FREQUENCY",
   WAITING = "IND_WAITING",
   SPEED = "IND_SPEED",
   SEATS = "IND_SEATS",
@@ -120,131 +135,75 @@ rename_vec <- c(
   HEALTH = "norm_PRSOC",
   SECURITY = "norm_POLICE",
   ADMINISTRATION = "norm_UFFCOM",
-  FOOD = "norm_SMERC"
+  FOOD = "norm_SMERC",
+  MEDICINE = "norm_FARMA",
+  COMMUNICATION = "norm_UFFPO",
+  MARKET = "norm_MERCAT",
+  CRIMINALITY = "norm_CRIM"
   
 )
 
-avq_scaled_renamed <- avq_scaled %>% 
-  rename(!!!rename_vec) 
+avq_scaled_renamed <- avq_scaled %>%
+  rename(!!!rename_vec)
 
 
-efa_vars <- c("WAITING","SPEED","SEATS","TIME","COST","PUNCTUALITY","CLEAN","CONNECTION",
-              "CONGESTION","PARKING","TRUST3","TRUST1","TRUST2",
-              "AFFORDABILITY1","AFFORDABILITY2","RELAX","SADNESS","AGITATION","DESPONDENCY","HAPPINESS",
-              "HEALTH","SECURITY","ADMINISTRATION","FOOD")
+efa_variables <- c(  "CRIMINALITY", "WAITING","SPEED", "SEATS","TIME","COST","PUNCTUALITY","CLEAN","CONNECTION", "FREQUENCY"
+                     , "CONGESTION","PARKING","TRUST3","TRUST1","TRUST2",
+                     "AFFORDABILITY1", "AFFORDABILITY2", "RELAX","SADNESS","AGITATION","DESPONDENCY","HAPPINESS",
+                     "HEALTH","SECURITY","ADMINISTRATION","FOOD", "MEDICINE", "COMMUNICATION", "MARKET")
+
+set.seed(123)
 
 sample_size <- nrow(avq_scaled_renamed)
 indices <- sample(1:sample_size, size = sample_size * 0.5)
 
-efa_sample <- avq_scaled_renamed[indices, efa_vars]
-cfa_sample <- avq_scaled_renamed[-indices, efa_vars]
+efa_sample <- avq_scaled_renamed[indices, efa_variables]
+cfa_sample <- avq_scaled_renamed[-indices, efa_variables]
 
+options(digits = 15)
 
-# (Murphy, 2021)
-efa_data <- na.omit(efa_sample)
+efa_num <- dplyr::select(efa_sample, where(is.numeric))
+efa_clean <- na.omit(efa_num)
 
-#  KMO Test (Murphy, 2021)
-kmo_res <- KMO(efa_data)
-print(kmo_res)
+chi_crit <- qchisq(0.999, df = ncol(efa_clean))
 
-#  KMO & Bartlett's Test of Sphericity (Murphy, 2021)
-cortest.bartlett(efa_data)
+efa_sample2 <- efa_clean
+iteration <- 0
 
-ev <- eigen(cor(efa_data))
-num_factors_kaiser <- sum(ev$values > 1)
-cat("Number of factors (Kaiser):", num_factors_kaiser, "\n")
-
-scree(efa_data, pc = FALSE)
-
-par(cex=0.5)  
-
-pa_res <- paran(efa_data,
-                iterations = 100,
-                centile = 0.95,
-                graph = TRUE,
-                status = FALSE,   
-                legend = TRUE)   
-
-par(cex=1)
-
-cat("Number of factors (Parallel Analysis):", pa_res$Retained, "\n")
-
-Nfacs <- pa_res$Retained
-
-# EFA (Murphy, 2021)
-
-efa_fit <- factanal(efa_data, factors = Nfacs, rotation = "promax")
-print(efa_fit, digits = 2, cutoff = 0.3, sort = TRUE)
-
-
-#  CORRELATION (whalley, na)
-vars_cor <- cfa_sample
-corr_res_spearman <- psych::corr.test(vars_cor, use = "pairwise", method = "spearman")
-print(corr_res_spearman$r)
-print(corr_res_spearman$p)
-
-# NORMALITY (Hallquist, 2017)
-print(psych::describe(vars_cor)[, c("skew", "kurtosis")])
-
-# CRONBACH ALPHA (RPUBS, na)
-alpha_sets <- list(
-  Perceived_accessibility = cfa_sample %>% select(WAITING , SPEED , SEATS , TIME , COST , PUNCTUALITY , CLEAN , CONNECTION),
-  Affordability = cfa_sample %>% select(AFFORDABILITY2, AFFORDABILITY1 ),
-  viability = cfa_sample %>% select(CONGESTION, PARKING),
-  Administration = cfa_sample %>% select(TRUST3, TRUST1, TRUST2),
-  health = cfa_sample %>% select(HAPPINESS , RELAX , SADNESS , AGITATION , DESPONDENCY),
-  Accessibility = cfa_sample %>% select(HEALTH , SECURITY , ADMINISTRATION , FOOD)
-)
-alphas <- lapply(alpha_sets, psych::alpha)
-alpha_results <- lapply(alphas, function(a) a$total$raw_alpha)
-print(alpha_results)
-
-
-# COMPOSITE RELIABILITY E AVE (JORGENSEN, 2015)
-model_measurement <- '
- Perceived_accessibility =~ WAITING + SPEED + SEATS + TIME + COST + PUNCTUALITY + CLEAN + CONNECTION
-  Viability =~ CONGESTION + PARKING
-  Accessibility =~ HEALTH + SECURITY + ADMINISTRATION + FOOD
-  Administration =~ TRUST3 + TRUST1 + TRUST2
-  Affordability =~ AFFORDABILITY1 + AFFORDABILITY2
-  health =~ HAPPINESS + RELAX + SADNESS + AGITATION + DESPONDENCY
-'
-
-fit_measurement <- sem(model_measurement, data = cfa_sample, missing = "fiml")
-
-library(semTools)
-compRelSEM(fit_measurement)
-AVE(fit_measurement)
-
-# FORNELL-LARCKER (Wilhelm, 2022)
-
-source("https://raw.githubusercontent.com/franciscowilhelm/r-collection/master/forn_larcker_test.R")
-
-
-factors <- c("Perceived_accessibility", "Viability", "Accessibility", 
-             "Administration", "Affordability", "health")
-
-compare <- function(factor_name, all_factors, fit) {
-  others <- setdiff(all_factors, factor_name)
-  forn_larcker_test(
-    fit,
-    x = factor_name,
-    y = others,
-    x.only = TRUE
-  )
+repeat {
+  iteration <- iteration + 1
+  
+  md <- mahalanobis(efa_sample2, colMeans(efa_sample2), cov(efa_sample2))
+  max_md <- max(md)
+  
+  
+  cat("", iteration, "-Mahalanobis:", max_md, "\n")
+  cat("Critical value:", chi_crit, "\n")
+  
+  if(max_md < chi_crit){
+    cat("Max value is below critical value. Stop.\n")
+    break
+  }
+  
+  
+  max_index <- which.max(md)
+  efa_sample2 <- efa_sample2[-max_index, ]
 }
 
-forn_larcker_all <- map_dfr(factors, compare, all_factors = factors, fit = fit_measurement)
+cat("\nFinal number of osservations:", nrow(efa_sample2), "\n")
+cat("Mahalanobis:", max(md), "\n")
+cat("Critical value:", chi_crit, "\n")
 
-print(forn_larcker_all, n = Inf)
+
+psych::describe(dplyr::select(efa_sample2, dplyr::all_of(efa_variables)))[, c("skew", "kurtosis")]
 
 
 #VIF (Bhale and Harpreet, 2024)
-
-vars <- c(vars <- c("WAITING", "SPEED", "SEATS", "TIME", "COST", "PUNCTUALITY", "CLEAN", "CONNECTION", "CONGESTION", "PARKING", "TRUST3", "TRUST1", "TRUST2", "AFFORDABILITY1", "AFFORDABILITY2", 
-                    "HAPPINESS" ,"RELAX" , "SADNESS" , "AGITATION" , "DESPONDENCY" , "HEALTH" , "SECURITY" , "ADMINISTRATION" , "FOOD" )
+variables <- c(variables <- c("CRIMINALITY", "WAITING","SPEED", "SEATS","TIME","COST","PUNCTUALITY","CLEAN","CONNECTION", "FREQUENCY"
+                              , "CONGESTION","PARKING","TRUST3","TRUST1","TRUST2",
+                              "AFFORDABILITY1","AFFORDABILITY2","RELAX","SADNESS","AGITATION","DESPONDENCY","HAPPINESS",
+                              "HEALTH","SECURITY","ADMINISTRATION","FOOD", "MEDICINE", "COMMUNICATION", "MARKET")
 )
-
 calc_all_vif <- function(data, variables) {
   vif_results <- numeric(length(variables))
   names(vif_results) <- variables
@@ -264,23 +223,327 @@ calc_all_vif <- function(data, variables) {
   return(vif_results)
 }
 
-vif_all <- calc_all_vif(cfa_sample, vars)
+
+vif_all <- calc_all_vif(efa_sample2, variables)
 print(vif_all)
 
+#  CORRELATION (whalley, na)
+corr_res_spearman <- psych::corr.test(efa_sample2, method = "spearman")
+print(corr_res_spearman$r)
+print(corr_res_spearman$p)
 
-# SEM MODEL (OARC stats, 2025; Lavaan.org, 2025)
 
-model_new <- '
-  Perceived_accessibility =~ WAITING + SPEED + SEATS + TIME + COST + PUNCTUALITY + CLEAN + CONNECTION
-  Viability =~ CONGESTION + PARKING
-  Accessibility =~ HEALTH + SECURITY + ADMINISTRATION + FOOD
+
+#  KMO Test (Murphy, 2021)
+kmo_res <- KMO(efa_sample2)
+print(kmo_res)
+
+#  KMO & Bartlett's Test of Sphericity (Murphy, 2021)
+cortest.bartlett(efa_sample2)
+
+ev <- eigen(cor(efa_sample2))
+num_factors_kaiser <- sum(ev$values > 1)
+cat("Number of factors (Kaiser):", num_factors_kaiser, "\n")
+
+scree(efa_sample2, pc = FALSE)
+
+par(cex=0.5)  
+
+pa_res <- paran(efa_sample2,
+                iterations = 100,
+                centile = 0.95,
+                graph = TRUE,
+                status = FALSE,  
+                legend = TRUE)  
+
+par(cex=1)
+
+cat("Number of factors (Parallel Analysis):", pa_res$Retained, "\n")
+
+Nfacs <- pa_res$Retained
+
+# EFA (Murphy, 2021)
+
+efa_fit <- factanal(efa_sample2, factors = Nfacs, rotation = "promax")
+
+print(efa_fit, digits = 2, cutoff = 0.3, sort = TRUE)
+
+
+efa_variables <- c( "CRIMINALITY","CONNECTION", "TIME", "FREQUENCY"
+                    ,"WAITING","SPEED","SEATS","COST","PUNCTUALITY","CLEAN",
+                    "CONGESTION","PARKING","TRUST3","TRUST1","TRUST2",
+                    "RELAX","SADNESS","AGITATION","DESPONDENCY","HAPPINESS",
+                    "HEALTH","SECURITY","ADMINISTRATION", "MEDICINE","FOOD","MARKET", "COMMUNICATION")
+set.seed(123)
+
+sample_size <- nrow(avq_scaled_renamed)
+indices <- sample(1:sample_size, size = sample_size * 0.5)
+
+efa_sample <- avq_scaled_renamed[indices, efa_variables]
+cfa_sample <- avq_scaled_renamed[-indices, efa_variables]
+
+
+options(digits = 15)
+
+efa_num <- dplyr::select(efa_sample, where(is.numeric))
+efa_clean <- na.omit(efa_num)
+
+chi_crit <- qchisq(0.999, df = ncol(efa_clean))
+
+efa_sample2 <- efa_clean
+iteration <- 0
+
+repeat {
+  iteration <- iteration + 1
+  
+  md <- mahalanobis(efa_sample2, colMeans(efa_sample2), cov(efa_sample2))
+  max_md <- max(md)
+  
+  
+  cat("", iteration, "- Mahalanobis:", max_md, "\n")
+  cat("Critical value:", chi_crit, "\n")
+  
+  if(max_md < chi_crit){
+    cat("Max value is below critical value. Stop.\n")
+    break
+  }
+  
+  
+  max_index <- which.max(md)
+  efa_sample2 <- efa_sample2[-max_index, ]
+}
+
+cat("\nFinal number of osservations:", nrow(efa_sample2), "\n")
+cat("Maximum Mahalanobis value:", max(md), "\n")
+cat("Critical value:", chi_crit, "\n")
+
+
+psych::describe(dplyr::select(efa_sample2, dplyr::all_of(efa_variables)))[, c("skew", "kurtosis")]
+
+#VIF (Bhale and Harpreet, 2024)
+variables <- c(variables <- c("CRIMINALITY", "WAITING","SPEED", "SEATS","TIME","COST","PUNCTUALITY","CLEAN","CONNECTION", "FREQUENCY"
+                              , "CONGESTION","PARKING","TRUST3","TRUST1","TRUST2",
+                              "RELAX","SADNESS","AGITATION","DESPONDENCY","HAPPINESS",
+                              "HEALTH","SECURITY","ADMINISTRATION","FOOD", "MEDICINE", "COMMUNICATION")
+)
+calc_all_vif <- function(data, variables) {
+  vif_results <- numeric(length(variables))
+  names(vif_results) <- variables
+  
+  for (var in variables) {
+    predictors <- setdiff(variables, var)
+    formula <- as.formula(paste(var, "~", paste(predictors, collapse = " + ")))
+    lm_model <- lm(formula, data = data)
+    
+    
+    r2 <- summary(lm_model)$r.squared
+    
+    
+    vif_results[var] <- 1 / (1 - r2)
+  }
+  
+  return(vif_results)
+}
+
+
+vif_all <- calc_all_vif(efa_sample2, variables)
+print(vif_all)
+
+#  CORRELATION (whalley, na)
+corr_res_spearman <- psych::corr.test(efa_sample2, method = "spearman")
+print(corr_res_spearman$r)
+print(corr_res_spearman$p)
+
+#  KMO Test (Murphy, 2021)
+kmo_res <- KMO(efa_sample2)
+print(kmo_res)
+
+#  KMO & Bartlett's Test of Sphericity (Murphy, 2021)
+cortest.bartlett(efa_sample2)
+
+ev <- eigen(cor(efa_sample2))
+num_factors_kaiser <- sum(ev$values > 1)
+cat("Number of factors (Kaiser):", num_factors_kaiser, "\n")
+
+scree(efa_sample2, pc = FALSE)
+
+par(cex=0.5)  
+
+pa_res <- paran(efa_sample2,
+                iterations = 100,
+                centile = 0.95,
+                graph = TRUE,
+                status = FALSE,  
+                legend = TRUE)  
+
+par(cex=1)
+
+cat("Number of factors (Parallel Analysis):", pa_res$Retained, "\n")
+
+Nfacs <- pa_res$Retained
+
+# EFA (Murphy, 2021)
+
+efa_fit <- factanal(efa_sample2, factors = Nfacs, rotation = "promax")
+
+print(efa_fit, digits = 2, cutoff = 0.3, sort = TRUE)
+
+#CRONBACH ALPHA (RPUBS, na)
+library(dplyr)
+library(psych)
+
+Perceived_accessibility <-select(efa_sample2, WAITING , SPEED , SEATS , TIME , COST , CONNECTION, PUNCTUALITY, CLEAN, FREQUENCY)
+viability <-  select(efa_sample2, CONGESTION, PARKING, CRIMINALITY)
+Administration <-select(efa_sample2, TRUST3, TRUST1, TRUST2)
+health <- select(efa_sample2, HAPPINESS , RELAX , SADNESS , AGITATION , DESPONDENCY)
+Accessibility <-  select(efa_sample2, HEALTH , SECURITY , ADMINISTRATION , FOOD, MEDICINE, COMMUNICATION)
+
+
+alpha(viability)
+alpha(health)
+alpha(Accessibility)
+alpha(Administration)
+alpha(Perceived_accessibility)
+
+# COMPOSITE RELIABILITY E AVE (JORGENSEN, 2015)
+model_measurement <- '
+ Perceived_accessibility =~  WAITING + SPEED + SEATS + TIME + COST + CONNECTION + PUNCTUALITY + CLEAN + FREQUENCY
+  Viability =~  CONGESTION + PARKING + CRIMINALITY
+  Accessibility =~ HEALTH + SECURITY + ADMINISTRATION + FOOD + MARKET + MEDICINE + COMMUNICATION
   Administration =~ TRUST3 + TRUST1 + TRUST2
-  Affordability =~ AFFORDABILITY1 + AFFORDABILITY2
   health =~ HAPPINESS + RELAX + SADNESS + AGITATION + DESPONDENCY
- Perceived_accessibility ~ Administration + health + Accessibility + Affordability + Viability
 '
 
-fit <- sem(model_new, data = cfa_sample, missing = "fiml")
+fit_measurement <- sem(model_measurement, data = efa_sample2)
+
+library(semTools)
+compRelSEM(fit_measurement)
+AVE(fit_measurement)
+
+
+# FORNELL-LARCKER (Wilhelm, 2022)
+lavInspect(fit_measurement, what = "cor.lv")^2
+
+#CFA
+
+options(digits = 15)
+
+cfa_num <- dplyr::select(cfa_sample, where(is.numeric))
+cfa_clean <- na.omit(cfa_num)
+
+chi_crit <- qchisq(0.999, df = ncol(cfa_clean))
+
+cfa_sample2 <- cfa_clean
+iteration <- 0
+
+repeat {
+  iteration <- iteration + 1
+  
+  md <- mahalanobis(efa_sample2, colMeans(cfa_sample2), cov(cfa_sample2))
+  max_md <- max(md)
+  
+  
+  cat("", iteration, "-Mahalanobis:", max_md, "\n")
+  cat("Critical Value:", chi_crit, "\n")
+  
+  if(max_md < chi_crit){
+    cat("Max value is below critical value. Stop.\n")
+    break
+  }
+  
+  
+  max_index <- which.max(md)
+  cfa_sample2 <- cfa_sample2[-max_index, ]
+}
+
+cat("\nFinal number of osservations:", nrow(cfa_sample2), "\n")
+cat("Maximum Mahalanobis value:", max(md), "\n")
+cat("Critical value:", chi_crit, "\n")
+
+psych::describe(dplyr::select(cfa_sample2, dplyr::all_of(efa_variables)))[, c("skew", "kurtosis")]
+
+#VIF (Bhale and Harpreet, 2024)
+variables <- c(variables <- c("CRIMINALITY", "WAITING","SPEED", "SEATS","TIME","COST","PUNCTUALITY","CLEAN","CONNECTION", "FREQUENCY"
+                              , "CONGESTION","PARKING","TRUST3","TRUST1","TRUST2",
+                              "RELAX","SADNESS","AGITATION","DESPONDENCY","HAPPINESS",
+                              "HEALTH","SECURITY","ADMINISTRATION","FOOD", "MEDICINE", "MARKET", "COMMUNICATION")
+)
+calc_all_vif <- function(data, variables) {
+  vif_results <- numeric(length(variables))
+  names(vif_results) <- variables
+  
+  for (var in variables) {
+    predictors <- setdiff(variables, var)
+    formula <- as.formula(paste(var, "~", paste(predictors, collapse = " + ")))
+    lm_model <- lm(formula, data = data)
+    
+    
+    r2 <- summary(lm_model)$r.squared
+    
+    
+    vif_results[var] <- 1 / (1 - r2)
+  }
+  
+  return(vif_results)
+}
+
+
+vif_all <- calc_all_vif(cfa_sample2, variables)
+print(vif_all)
+
+#  CORRELATION (whalley, na)
+corr_res_spearman <- psych::corr.test(cfa_sample2, method = "spearman")
+print(corr_res_spearman$r)
+print(corr_res_spearman$p)
+
+
+#CRONBACH ALPHA (RPUBS, na)
+
+Perceived_accessibility <-select(cfa_sample2, WAITING , SPEED , SEATS , TIME , COST , CONNECTION, PUNCTUALITY, CLEAN, FREQUENCY)
+viability <-  select(cfa_sample2, CONGESTION, PARKING, CRIMINALITY)
+Administration <-select(cfa_sample2, TRUST3, TRUST1, TRUST2)
+health <- select(cfa_sample2, HAPPINESS , RELAX , SADNESS , AGITATION , DESPONDENCY)
+Accessibility <-  select(cfa_sample2, HEALTH , SECURITY ,MARKET,  ADMINISTRATION , FOOD, MEDICINE, COMMUNICATION)
+
+
+alpha(viability)
+alpha(health)
+alpha(Accessibility)
+alpha(Administration)
+alpha(Perceived_accessibility)
+
+# COMPOSITE RELIABILITY E AVE (JORGENSEN, 2015)
+model_measurement <- '
+ Perceived_accessibility =~  WAITING + SPEED + SEATS + TIME + COST + CONNECTION + PUNCTUALITY + CLEAN + FREQUENCY
+  Viability =~  CONGESTION + PARKING + CRIMINALITY
+  Accessibility =~ HEALTH + SECURITY + ADMINISTRATION + MARKET + FOOD + MEDICINE + COMMUNICATION
+  Administration =~ TRUST3 + TRUST1 + TRUST2
+  health =~ HAPPINESS + RELAX + SADNESS + AGITATION + DESPONDENCY
+'
+
+fit_measurement <- sem(model_measurement, data = cfa_sample2)
+
+library(semTools)
+compRelSEM(fit_measurement)
+AVE(fit_measurement)
+
+
+# FORNELL-LARCKER (Wilhelm, 2022)
+lavInspect(fit_measurement, what = "cor.lv")^2
+
+
+# CFA MODEL (OARC stats, 2025; Lavaan.org, 2025)
+
+model_new <- '
+  Perceived_accessibility =~  WAITING + SPEED + SEATS + TIME + COST + PUNCTUALITY + CLEAN + CONNECTION + FREQUENCY
+  Viability =~ CONGESTION + PARKING + CRIMINALITY
+  Accessibility =~ HEALTH + SECURITY + ADMINISTRATION + FOOD + MARKET + MEDICINE + COMMUNICATION
+  Administration =~ TRUST3 + TRUST1 + TRUST2
+  health =~  SADNESS + AGITATION + DESPONDENCY + HAPPINESS + RELAX
+ Perceived_accessibility ~ Administration + health + Accessibility + Viability 
+'
+
+fit <- sem(model_new, data = cfa_sample2)
 
 summary(fit, standardized = TRUE, fit.measures = TRUE)
 
@@ -290,8 +553,8 @@ fitMeasures(fit)
 lavaanPlot(model = fit,
            node_options = list(shape = "box", fontname = "Helvetica", fontsize = 14),
            edge_options = list(color = "black", lty = 1, lwd = 1.5),
-           coefs = TRUE,     
-           stand = FALSE)   
+           coefs = TRUE,    
+           stand = FALSE)  
 
 
 #R-Squared (RDRR.IO, na)
@@ -310,15 +573,14 @@ print(df_baseline)
 pcfi <- cfi * (df_model / df_baseline)
 pcfi
 
-
 # List of references
-# BHALE, U. A., and Harpreet S. B. 2024. What is mean by Multicollinearity in SEM? 
+# BHALE, U. A., and Harpreet S. B. 2024. What is mean by Multicollinearity in SEM?
 #URL: https://www.researchgate.net/publication/377691806
 
-# JORGENSEN, T. D., 2015. SemTools: Useful Tools for Structural Equation Modeling. 
+# JORGENSEN, T. D., 2015. SemTools: Useful Tools for Structural Equation Modeling.
 #URL: https://cran.r-project.org/web/packages/semTools/semTools.pdf
 
-#HALLQUIST. 2017. Best practices in SEM PSY 597. 
+#HALLQUIST. 2017. Best practices in SEM PSY 597.
 #URL: https://psu-psychology.github.io/psy-597-SEM/12_best_practices/best_practices.html
 
 #ISTAT. 2025. Aspetti della vita quotidiana, 2023.
@@ -327,28 +589,29 @@ pcfi
 # LAVAAN:ORG. 2025. Extracting information.
 #URL: https://lavaan.ugent.be/tutorial/inspect.html
 
-#LISHINSKI, A., 2024. Intro to lavaanPlot. 
+#LISHINSKI, A., 2024. Intro to lavaanPlot.
 #URL: https://cran.r-project.org/web/packages/lavaanPlot/vignettes/Intro_to_lavaanPlot.html
 
-#Murphy, P., 2021. Exploratory factor analysis. 
+#Murphy, P., 2021. Exploratory factor analysis.
 #URL: https://rpubs.com/pjmurphy/758265
 
 # OARC stats. 2025. Introduction to Structural Equation Modeling (SEM) in R with lavaan.
 #URL:https://stats.oarc.ucla.edu/r/seminars/rsem/
 
-#RDDR. LavInspect: Inspect or extract information from a fitted lavaan object. 
+#RDDR. LavInspect: Inspect or extract information from a fitted lavaan object.
 #URL: https://rdrr.io/cran/lavaan/man/lavInspect.html
 
-#RPUBS. Reliability analysis. 
+#RPUBS. Reliability analysis.
 #URL: https://rpubs.com/hauselin/reliabilityanalysis
 
-# STATISTIKA. 2025. How to interpret SEM model fit results in AMOS. 
+# STATISTIKA. 2025. How to interpret SEM model fit results in AMOS.
 
 # UNIVERSITY OF FLORIDA. Spearman correlation in R.
 #URL: https://users.phhp.ufl.edu/marsiske/r/AnalyzeCorrelateSpearman.html
 
-# WHALLEY, B., Correlation. 
+# WHALLEY, B., Correlation.
 #URL: https://benwhalley.github.io/just-enough
 
 # Whilelm, F., 2022. Fornell-Larcker Criterion with R using lavaan
-#URL: https://www.franciscowilhelm.com/post/fornell-larcker-test/
+#URL: https://www.franciscowilhelm.com/blog/fornell-larcker-test/
+
