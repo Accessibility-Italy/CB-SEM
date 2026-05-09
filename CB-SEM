@@ -1,3 +1,4 @@
+
 install.packages("dplyr")
 install.packages("lavaan")
 install.packages("lavaanPlot")
@@ -25,6 +26,8 @@ library(moments)
 
 
 
+
+
 path <- file.choose()
 
 datiR_2023 <- read.delim(
@@ -36,13 +39,13 @@ check.names = FALSE
 
 
 avq_clean <- datiR_2023 %>%
-mutate(across(c(TRAF, PARCH, CRIM),
-~ ifelse(. == 5, NA, .)))
+mutate(
+across(c(TRAF, PARCH, CRIM),
+ ~ ifelse(. == 5, NA, .))
+)
 
 avq_clean[c("FARMA", "PRSOC", "UFFPO", "POLICE",
-"UFFCOM", "MERCAT", "SMERC")] <-
-lapply(
-avq_clean[c("FARMA", "PRSOC", "UFFPO", "POLICE",
+"UFFCOM", "MERCAT", "SMERC")] <- lapply(avq_clean[c("FARMA", "PRSOC", "UFFPO", "POLICE",
 "UFFCOM", "MERCAT", "SMERC")],
 function(x) {
 x[x %in% c(4, 5)] <- NA
@@ -50,18 +53,125 @@ x
 }
 )
 
+avq_clean1 <- avq_clean
 
-psych::describe(
-avq_clean[, c(
-"TRAF", "PARCH", "CRIM",
-"FARMA", "PRSOC", "UFFPO", "POLICE", "UFFCOM", "MERCAT", "SMERC",
-"COLLEG", "COLCO", "COLCOM",
-"FRCMT", "PUNMT", "SEDMT", "VELMT", "PULMT", "ATTMT", "ORAMT", "CBMT", "INFMT",
-"FRTRE", "PUTRE", "PSTRE", "VETRE", "PULSTR", "COMAT", "COMORA", "COBIG", "INFTR",
-"FCORS", "PUNT", "POSSE", "VELCO", "PULIZ", "COMOF", "COMOR", "CPSBI", "SITE",
-"RISEC","SF9", "SF15", "PUNTIFI10", "SF11", "SF13", "SF14", "PUNTIFI8", "PUNTIFI1"
-)]
+avq_clean1[c("FARMA", "PRSOC", "UFFPO", "POLICE",
+"UFFCOM", "MERCAT", "SMERC")] <-
+lapply(avq_clean1[c("FARMA", "PRSOC", "UFFPO", "POLICE",
+"UFFCOM", "MERCAT", "SMERC")],
+function(x) ifelse(x == 4, 0, 4 - x)
 )
+
+
+avq_scaled <- avq_clean1
+
+
+avq_scaled$CONNE <- rowMeans(
+avq_scaled[, c("COLLEG","COLCO","COLCOM")],
+na.rm = TRUE
+)
+
+avq_scaled$CLEAN <- rowMeans(
+avq_scaled[, c("PULIZ",
+"PULMT",
+"PULSTR")],
+na.rm = TRUE
+)
+
+avq_scaled$SPEED <- rowMeans(
+avq_scaled[, c("VELCO",
+"VELMT",
+"VETRE")],
+na.rm = TRUE
+)
+
+avq_scaled$PUNCT <- rowMeans(
+avq_scaled[, c("PUNT",
+"PUNMT","PUTRE")],
+na.rm = TRUE
+)
+
+avq_scaled$SEATS <- rowMeans(
+avq_scaled[, c("POSSE",
+"SEDMT","PSTRE")],
+na.rm = TRUE
+)
+
+avq_scaled$WAITI <- rowMeans(avq_scaled[, c("COMOF","ATTMT","COMAT")],
+na.rm = TRUE
+)
+
+avq_scaled$TIME <- rowMeans(
+avq_scaled[, c("COMOR", "ORAMT", "COMORA")], na.rm = TRUE
+)
+
+avq_scaled$COST <- rowMeans(
+avq_scaled[, c("CPSBI","CBMT","COBIG")],
+na.rm = TRUE
+)
+
+avq_scaled$FREQU <- rowMeans(
+avq_scaled[, c("FCORS",
+"FRCMT",
+"FRTRE")],
+na.rm = TRUE
+)
+
+
+summary_data <- avq_scaled %>%
+rename(
+CONGE = "TRAF",
+PARKI = "PARCH",
+TRUS3 = "PUNTIFI10",
+TRUS1 = "PUNTIFI1",
+TRUS2 = "PUNTIFI8",
+AFFO1 = "RISEC",
+AFFO2 = "SITE",
+HAPPI = "SF15",
+RELAX = "SF9",
+SADNE = "SF11",
+AGITA = "SF13",
+DESPO = "SF14",
+HEALT = "PRSOC",
+SECUR = "POLICE",
+ADMIN = "UFFCOM",
+FOOD = "SMERC",
+MEDIC = "FARMA",
+COMMU = "UFFPO",
+MARKE = "MERCAT",
+CRIMI = "CRIM",
+FREQU = "FREQU",
+WAITI = "WAITI",
+SPEED = "SPEED",
+SEATS = "SEATS",
+TIME = "TIME",
+COST = "COST",
+PUNCT = "PUNCT",
+CLEAN = "CLEAN",
+CONNE = "CONNE"
+  )
+
+vars <- c(
+"CONGE","PARKI","TRUS3","TRUS1","TRUS2",
+"AFFO1","AFFO2","HAPPI","RELAX","SADNE",
+"AGITA","DESPO","HEALT","SECUR","ADMIN",
+"FOOD","MEDIC","COMMU","MARKE","CRIMI",
+"FREQU","WAITI","SPEED","SEATS","TIME",
+"COST","PUNCT","CLEAN","CONNE"
+)
+
+
+desc_stats <- psych::describe(summary_data[, vars])
+
+
+desc_stats$Missing <- nrow(summary_data) - desc_stats$n
+
+
+final_table <- desc_stats[, c(
+"n", "Missing", "mean", "sd", "min", "max"
+)]
+
+final_table
 
 # (ISTAT, 2023)
 
@@ -228,6 +338,7 @@ efa_clean <- na.omit(efa_num)
 chi_crit <- qchisq(0.999, df = ncol(efa_clean))
 
 efa_sample2 <- efa_clean
+psych::describe(efa_sample2)[, c("skew", "kurtosis")]
 iteration <- 0
 
 repeat {
@@ -302,14 +413,14 @@ print(kmo_res)
 cortest.bartlett(efa_sample2)
 
 ev <- eigen(cor(efa_sample2))
+
 num_factors_kaiser <- sum(ev$values > 1)
 cat("Number of factors (Kaiser):", num_factors_kaiser, "\n")
 
+par(mar = c(5, 5, 4, 2))  
 scree(efa_sample2, pc = FALSE)
 
 par(cex=0.5)  
-
-
 
 pa_res <- paran(efa_sample2,
                 iterations = 100,
@@ -457,10 +568,10 @@ cortest.bartlett(efa_sample2)
 ev <- eigen(cor(efa_sample2))
 num_factors_kaiser <- sum(ev$values > 1)
 cat("Number of factors (Kaiser):", num_factors_kaiser, "\n")
+ 
 
+par(mar = c(5, 5, 4, 2))  
 scree(efa_sample2, pc = FALSE)
-
-par(cex=0.5)  
 
 pa_res <- paran(efa_sample2,
                 iterations = 100,
@@ -517,7 +628,7 @@ psych::alpha(viability)
 psych::alpha(health)
 psych::alpha(Accessibility)
 psych::alpha(Administration)
-psych::alpha(Perceived_accessibility)
+psych::alpha(Satisfaction)
 
 
 # COMPOSITE RELIABILITY E AVE (JORGENSEN, 2015)
@@ -624,7 +735,7 @@ psych::alpha(viability)
 psych::alpha(health)
 psych::alpha(Accessibility)
 psych::alpha(Administration)
-psych::alpha(Perceived_accessibility)
+psych::alpha(Satisfaction)
 
 
 
@@ -719,7 +830,7 @@ pcfi
 #URL: https://cran.r-project.org/web/packages/semTools/semTools.pdf
 
 #HALLQUIST. 2017. Best practices in SEM PSY 597.
-#URL: https://psu-psychology.github.io/psy-597-SEM/12_best_practices/best_practices.html
+\#URL: https://psu-psychology.github.io/psy-597-SEM/12_best_practices/best_practices.html
 
 #ISTAT. 2025. Aspetti della vita quotidiana, 2023.
 #URL: https://www.istat.it/microdati/aspetti-della-vita-quotidiana/
