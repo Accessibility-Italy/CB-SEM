@@ -1,4 +1,3 @@
-
 install.packages("dplyr")
 install.packages("lavaan")
 install.packages("lavaanPlot")
@@ -10,7 +9,7 @@ install.packages("performance")
 install.packages("psych")
 install.packages("RNOmni")
 install.packages("moments")
-
+install.packages("purrr")
 
 library(dplyr)
 library(lavaan)
@@ -23,14 +22,14 @@ library(performance)
 library(psych)
 library(RNOmni)
 library(moments)
-
-
-
+library(dplyr)
+library(purrr)
+library(tidyr)
 
 
 path <- file.choose()
 
-datiR_2023 <- read.delim(
+data_2023 <- read.delim(
 path,
 header = TRUE,
 stringsAsFactors = FALSE,
@@ -38,143 +37,265 @@ check.names = FALSE
 )
 
 
-avq_clean <- datiR_2023 %>%
+data_clean <- data_2023 %>%
 mutate(
-across(c(TRAF, PARCH, CRIM),
- ~ ifelse(. == 5, NA, .))
-)
+across(
+c(TRAF, PARCH, CRIM),
+ ~ ifelse(. == 5, NA, .)
+    )
+  )
 
-avq_clean[c("FARMA", "PRSOC", "UFFPO", "POLICE",
-"UFFCOM", "MERCAT", "SMERC")] <- lapply(avq_clean[c("FARMA", "PRSOC", "UFFPO", "POLICE",
-"UFFCOM", "MERCAT", "SMERC")],
+data_clean[c(
+"FARMA", "PRSOC", "UFFPO", "POLICE",
+"UFFCOM", "MERCAT", "SMERC"
+)] <- lapply(
+data_clean[c(
+"FARMA", "PRSOC", "UFFPO", "POLICE",
+"UFFCOM", "MERCAT", "SMERC"
+)],
 function(x) {
 x[x %in% c(4, 5)] <- NA
 x
-}
+  }
 )
 
-avq_clean1 <- avq_clean
 
-avq_clean1[c("FARMA", "PRSOC", "UFFPO", "POLICE",
-"UFFCOM", "MERCAT", "SMERC")] <-
-lapply(avq_clean1[c("FARMA", "PRSOC", "UFFPO", "POLICE",
-"UFFCOM", "MERCAT", "SMERC")],
+data_clean_recoded <- data_clean
+
+data_clean_recoded[c(
+"FARMA", "PRSOC", "UFFPO", "POLICE",
+"UFFCOM", "MERCAT", "SMERC"
+)] <- lapply(
+data_clean_recoded[c(
+"FARMA", "PRSOC", "UFFPO", "POLICE",
+"UFFCOM", "MERCAT", "SMERC"
+)],
 function(x) ifelse(x == 4, 0, 4 - x)
 )
 
 
-avq_scaled <- avq_clean1
+data_scaled <- data_clean_recoded
 
-
-avq_scaled$CONNE <- rowMeans(
-avq_scaled[, c("COLLEG","COLCO","COLCOM")],
+data_scaled$CONNE <- rowMeans(
+data_scaled[, c("COLLEG", "COLCO", "COLCOM")],
 na.rm = TRUE
 )
 
-avq_scaled$CLEAN <- rowMeans(
-avq_scaled[, c("PULIZ",
-"PULMT",
-"PULSTR")],
+data_scaled$CLEAN <- rowMeans(
+data_scaled[, c("PULIZ", "PULMT", "PULSTR")],
 na.rm = TRUE
 )
 
-avq_scaled$SPEED <- rowMeans(
-avq_scaled[, c("VELCO",
-"VELMT",
-"VETRE")],
+data_scaled$SPEED <- rowMeans(
+data_scaled[, c("VELCO", "VELMT", "VETRE")],
 na.rm = TRUE
 )
 
-avq_scaled$PUNCT <- rowMeans(
-avq_scaled[, c("PUNT",
-"PUNMT","PUTRE")],
+data_scaled$PUNCT <- rowMeans(
+data_scaled[, c("PUNT", "PUNMT", "PUTRE")],
 na.rm = TRUE
 )
 
-avq_scaled$SEATS <- rowMeans(
-avq_scaled[, c("POSSE",
-"SEDMT","PSTRE")],
+data_scaled$SEATS <- rowMeans(
+data_scaled[, c("POSSE", "SEDMT", "PSTRE")],
 na.rm = TRUE
 )
 
-avq_scaled$WAITI <- rowMeans(avq_scaled[, c("COMOF","ATTMT","COMAT")],
+data_scaled$WAITI <- rowMeans(
+data_scaled[, c("COMOF", "ATTMT", "COMAT")],
 na.rm = TRUE
 )
 
-avq_scaled$TIME <- rowMeans(
-avq_scaled[, c("COMOR", "ORAMT", "COMORA")], na.rm = TRUE
-)
-
-avq_scaled$COST <- rowMeans(
-avq_scaled[, c("CPSBI","CBMT","COBIG")],
+data_scaled$TIME <- rowMeans(
+data_scaled[, c("COMOR", "ORAMT", "COMORA")],
 na.rm = TRUE
 )
 
-avq_scaled$FREQU <- rowMeans(
-avq_scaled[, c("FCORS",
-"FRCMT",
-"FRTRE")],
+data_scaled$COST <- rowMeans(
+data_scaled[, c("CPSBI", "CBMT", "COBIG")],
+na.rm = TRUE
+)
+
+data_scaled$FREQU <- rowMeans(
+data_scaled[, c("FCORS", "FRCMT", "FRTRE")],
 na.rm = TRUE
 )
 
 
-summary_data <- avq_scaled %>%
+summary_data <- data_scaled %>%
 rename(
-CONGE = "TRAF",
-PARKI = "PARCH",
-TRUS3 = "PUNTIFI10",
-TRUS1 = "PUNTIFI1",
-TRUS2 = "PUNTIFI8",
-AFFO1 = "RISEC",
-AFFO2 = "SITE",
-HAPPI = "SF15",
-RELAX = "SF9",
-SADNE = "SF11",
-AGITA = "SF13",
-DESPO = "SF14",
-HEALT = "PRSOC",
-SECUR = "POLICE",
-ADMIN = "UFFCOM",
-FOOD = "SMERC",
-MEDIC = "FARMA",
-COMMU = "UFFPO",
-MARKE = "MERCAT",
-CRIMI = "CRIM",
-FREQU = "FREQU",
-WAITI = "WAITI",
-SPEED = "SPEED",
-SEATS = "SEATS",
-TIME = "TIME",
-COST = "COST",
-PUNCT = "PUNCT",
-CLEAN = "CLEAN",
-CONNE = "CONNE"
-  )
+CONGE = TRAF,
+PARKI = PARCH,
+TRUS3 = PUNTIFI10,
+TRUS1 = PUNTIFI1,
+TRUS2 = PUNTIFI8,
+AFFO1 = RISEC,
+AFFO2 = SITE,
+HAPPI = SF15,
+RELAX = SF9,
+SADNE = SF11,
+AGITA = SF13,
+DESPO = SF14,
+HEALT = PRSOC,
+SECUR = POLICE,
+ADMIN = UFFCOM,
+FOOD = SMERC,
+MEDIC = FARMA,
+COMMU = UFFPO,
+MARKE = MERCAT,
+CRIMI = CRIM
+) %>%
+  
+mutate(
+    
+REGION = factor(
+ifelse(RIPMf == 9, NA, RIPMf),
+levels = 1:5
+),
+    
+SEX = factor(
+SESSO,
+levels = c(1, 2)
+),
+    
+AGE = factor(
+ETAMi,
+ordered = TRUE
+ ),
+    
+EDUCATION = factor(
+ifelse(ISTRMi == 99, NA, ISTRMi),
+ordered = TRUE
+ )
+    
+) %>%
+  
+filter(!is.na(REGION))
 
-vars <- c(
+
+qualitative_vars <- c(
 "CONGE","PARKI","TRUS3","TRUS1","TRUS2",
 "AFFO1","AFFO2","HAPPI","RELAX","SADNE",
 "AGITA","DESPO","HEALT","SECUR","ADMIN",
 "FOOD","MEDIC","COMMU","MARKE","CRIMI",
-"FREQU","WAITI","SPEED","SEATS","TIME",
-"COST","PUNCT","CLEAN","CONNE"
+"REGION","SEX","AGE","EDUCATION"
 )
 
 
-desc_stats <- psych::describe(summary_data[, vars])
+frequency_table <- function(data, var) {
+  
+x <- data[[var]]
+  
+valid_n <- sum(!is.na(x))
+  
+missing_n <- sum(is.na(x))
+  
+missing_pct <- round(
+(missing_n / length(x)) * 100,
+2
+)
+  
+valid_table <- as.data.frame(
+table(x, useNA = "no")
+  )
+  
+names(valid_table) <- c("Category", "Frequency")  
+valid_table %>%
+mutate(
+Variable = var,
+Percentage = round(
+(Frequency / valid_n) * 100,
+2
+),
+Missing_n = missing_n
+) %>%
+dplyr::select(
+Variable,
+Category,
+Frequency,
+Percentage,
+Missing_n
+)
+}
 
 
-desc_stats$Missing <- nrow(summary_data) - desc_stats$n
+qualitative_table <- purrr::map_dfr(
+qualitative_vars,
+~ frequency_table(summary_data, .x)
+)
 
 
-final_table <- desc_stats[, c(
-"n", "Missing", "mean", "sd", "min", "max"
-)]
+print(qualitative_table)
 
-final_table
+
+set.seed(123)
+
+sample_size <- nrow(summary_data)
+indices <- sample(1:sample_size, size = sample_size * 0.5)
+
+efa_data <- summary_data[indices, ]
+cfa_data <- summary_data[-indices, ]
+
+
+qualitative_vars <- c(
+"CONGE","PARKI","TRUS3","TRUS1","TRUS2",
+"HAPPI","RELAX","SADNE",
+"AGITA","DESPO","HEALT","SECUR","ADMIN",
+"FOOD","MEDIC","COMMU","MARKE","CRIMI",
+"REGION","SEX","AGE","EDUCATION"
+)
+
+
+frequency_table <- function(data, var) {
+  
+x <- data[[var]]
+  
+valid_n <- sum(!is.na(x))
+total_n <- length(x)
+  
+missing_n <- sum(is.na(x))
+missing_pct <- round((missing_n / total_n) * 100, 2)
+  
+valid_table <- as.data.frame(table(x, useNA = "no"))
+names(valid_table) <- c("Category", "Frequency")
+  
+valid_table %>%
+mutate(
+Variable = var,
+Percentage = round((Frequency / valid_n) * 100, 2),
+Missing_n = missing_n
+) %>%
+dplyr::select(
+Variable,
+Category,
+Frequency,
+Percentage,
+Missing_n
+)
+}
+
+
+efa_qualitative_table <- purrr::map_dfr(
+qualitative_vars,
+ ~ frequency_table(efa_data, .x)
+)
+
+
+cfa_qualitative_table <- purrr::map_dfr(
+qualitative_vars,
+~ frequency_table(cfa_data, .x)
+)
+
+
+print(efa_qualitative_table)
+print(cfa_qualitative_table)
+
+
+
+
+
 
 # (ISTAT, 2023)
-
 
 datiR_2023 <- read.delim(path, header = TRUE, stringsAsFactors = FALSE, check.names = FALSE)
 
@@ -620,7 +741,7 @@ health <- efa_sample2[, c(
 # Accessibility
 Accessibility <- efa_sample2[, c(
 "HEALT", "SECUR", "ADMIN",
-"FOOD", "MEDIC", "COMMU"
+"FOOD", "MEDIC", "COMMU", "MARKE"
 )]
 
 # Cronbach's alpha
@@ -727,7 +848,7 @@ health <- cfa_sample[, c(
 # Accessibility
 Accessibility <- cfa_sample[, c(
 "HEALT", "SECUR", "ADMIN",
-"FOOD", "MEDIC", "COMMU"
+"FOOD", "MEDIC", "COMMU", "MARKE"
 )]
 
 # Cronbach's alpha
@@ -760,7 +881,6 @@ lavInspect(fit_measurement, what = "cor.lv")^2
 
 
 # CFA MODEL (OARC stats, 2025; Lavaan.org, 2025)
-
 model_structural <- 'Satisfaction =~ WAITI + SPEED + SEATS + TIME + COST + CONNE + PUNCT + CLEAN + FREQU
 Viability =~ CONGE + PARKI + CRIMI
 Accessibility =~ HEALT + SECUR + ADMIN + FOOD + MARKE + MEDIC + COMMU
@@ -769,14 +889,22 @@ Health =~ HAPPI + RELAX + SADNE + AGITA + DESPO
 Satisfaction ~ Administration + Health + Accessibility + Viability + SEX + AGE + EDU '
 
 fit_multi <- sem(
-model_structural,
-data = cfa_sample,
-group = "REG",
-estimator = "WLSMV",
-missing = "listwise")
+  model_structural,
+  data = cfa_sample,
+  group = "REG",
+  estimator = "WLSMV",
+  missing = "listwise")
 
 summary(fit_multi, standardized=TRUE, fit.measures=TRUE)
 fitMeasures(fit_multi)
+
+
+
+
+library(psych)
+library(dplyr)
+library(tibble)
+
 
 
 # Plot (Lishinski, 2024)
