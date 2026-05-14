@@ -76,52 +76,6 @@ function(x) ifelse(x == 4, 0, 4 - x)
 
 data_scaled <- data_clean_recoded
 
-data_scaled$CONNE <- rowMeans(
-data_scaled[, c("COLLEG", "COLCO", "COLCOM")],
-na.rm = TRUE
-)
-
-data_scaled$CLEAN <- rowMeans(
-data_scaled[, c("PULIZ", "PULMT", "PULSTR")],
-na.rm = TRUE
-)
-
-data_scaled$SPEED <- rowMeans(
-data_scaled[, c("VELCO", "VELMT", "VETRE")],
-na.rm = TRUE
-)
-
-data_scaled$PUNCT <- rowMeans(
-data_scaled[, c("PUNT", "PUNMT", "PUTRE")],
-na.rm = TRUE
-)
-
-data_scaled$SEATS <- rowMeans(
-data_scaled[, c("POSSE", "SEDMT", "PSTRE")],
-na.rm = TRUE
-)
-
-data_scaled$WAITI <- rowMeans(
-data_scaled[, c("COMOF", "ATTMT", "COMAT")],
-na.rm = TRUE
-)
-
-data_scaled$TIME <- rowMeans(
-data_scaled[, c("COMOR", "ORAMT", "COMORA")],
-na.rm = TRUE
-)
-
-data_scaled$COST <- rowMeans(
-data_scaled[, c("CPSBI", "CBMT", "COBIG")],
-na.rm = TRUE
-)
-
-data_scaled$FREQU <- rowMeans(
-data_scaled[, c("FCORS", "FRCMT", "FRTRE")],
-na.rm = TRUE
-)
-
-
 summary_data <- data_scaled %>%
 rename(
 CONGE = TRAF,
@@ -129,23 +83,62 @@ PARKI = PARCH,
 TRUS3 = PUNTIFI10,
 TRUS1 = PUNTIFI1,
 TRUS2 = PUNTIFI8,
+    
 AFFO1 = RISEC,
 AFFO2 = SITE,
+    
 HAPPI = SF15,
 RELAX = SF9,
 SADNE = SF11,
 AGITA = SF13,
 DESPO = SF14,
+    
 HEALT = PRSOC,
 SECUR = POLICE,
 ADMIN = UFFCOM,
-FOOD = SMERC,
+FOOD  = SMERC,
 MEDIC = FARMA,
 COMMU = UFFPO,
 MARKE = MERCAT,
-CRIMI = CRIM
-) %>%
-  
+CRIMI = CRIM,
+    
+Connection_BUS     = COLLEG,
+Connection_PULLMAN = COLCO,
+Connection_TRAIN   = COLCOM,
+    
+CLEAN_BUS     = PULIZ,
+CLEAN_PULLMAN = PULMT,
+CLEAN_TRAIN   = PULSTR,
+    
+SPEED_BUS     = VELCO,
+SPEED_PULLMAN = VELMT,
+SPEED_TRAIN   = VETRE,
+    
+PUNCTUALITY_BUS     = PUNT,
+PUNCTUALITY_PULLMAN = PUNMT,
+PUNCTUALITY_TRAIN   = PUTRE,
+    
+SEATS_BUS     = POSSE,
+SEATS_PULLMAN = SEDMT,
+SEATS_TRAIN   = PSTRE,
+    
+WAITING_BUS     = COMOF,
+WAITING_PULLMAN = ATTMT,
+WAITING_TRAIN   = COMAT,
+    
+TIME_BUS     = COMOR,
+TIME_PULLMAN = ORAMT,
+TIME_TRAIN   = COMORA,
+    
+COST_BUS     = CPSBI,
+COST_PULLMAN = CBMT,
+COST_TRAIN   = COBIG,
+    
+FREQUENCY_BUS     = FCORS,
+FREQUENCY_PULLMAN = FRCMT,
+FREQUENCY_TRAIN   = FRTRE
+  )%>%
+
 mutate(
     
 REGION = factor(
@@ -174,13 +167,31 @@ filter(!is.na(REGION))
 
 
 qualitative_vars <- c(
-"CONGE","PARKI","TRUS3","TRUS1","TRUS2",
-"AFFO1","AFFO2","HAPPI","RELAX","SADNE",
-"AGITA","DESPO","HEALT","SECUR","ADMIN",
-"FOOD","MEDIC","COMMU","MARKE","CRIMI",
-"REGION","SEX","AGE","EDUCATION"
+  "AFFO1", "AFFO2",
+  "CONGE","PARKI","TRUS3","TRUS1","TRUS2",
+  "HAPPI","RELAX","SADNE",
+  "AGITA","DESPO","HEALT","SECUR","ADMIN",
+  "FOOD","MEDIC","COMMU","MARKE","CRIMI",
+  "REGION","SEX","AGE","EDUCATION",
+  
+  "Connection_BUS","Connection_PULLMAN","Connection_TRAIN",
+  
+  "CLEAN_BUS","CLEAN_PULLMAN","CLEAN_TRAIN",
+  
+  "SPEED_BUS","SPEED_PULLMAN","SPEED_TRAIN",
+  
+  "PUNCTUALITY_BUS","PUNCTUALITY_PULLMAN","PUNCTUALITY_TRAIN",
+  
+  "SEATS_BUS","SEATS_PULLMAN","SEATS_TRAIN",
+  
+  "WAITING_BUS","WAITING_PULLMAN","WAITING_TRAIN",
+  
+  "TIME_BUS","TIME_PULLMAN","TIME_TRAIN",
+  
+  "COST_BUS","COST_PULLMAN","COST_TRAIN",
+  
+  "FREQUENCY_BUS","FREQUENCY_PULLMAN","FREQUENCY_TRAIN"
 )
-
 
 frequency_table <- function(data, var) {
   
@@ -219,6 +230,7 @@ Missing_n
 }
 
 
+
 qualitative_table <- purrr::map_dfr(
 qualitative_vars,
 ~ frequency_table(summary_data, .x)
@@ -226,7 +238,8 @@ qualitative_vars,
 
 
 print(qualitative_table)
-
+options(max.print = 100000)
+print(qualitative_table)
 
 set.seed(123)
 
@@ -242,7 +255,23 @@ qualitative_vars <- c(
 "HAPPI","RELAX","SADNE",
 "AGITA","DESPO","HEALT","SECUR","ADMIN",
 "FOOD","MEDIC","COMMU","MARKE","CRIMI",
-"REGION","SEX","AGE","EDUCATION"
+"REGION","SEX","AGE","EDUCATION",    "Connection_BUS","Connection_PULLMAN","Connection_TRAIN",
+
+"CLEAN_BUS","CLEAN_PULLMAN","CLEAN_TRAIN",
+
+"SPEED_BUS","SPEED_PULLMAN","SPEED_TRAIN",
+
+"PUNCTUALITY_BUS","PUNCTUALITY_PULLMAN","PUNCTUALITY_TRAIN",
+
+"SEATS_BUS","SEATS_PULLMAN","SEATS_TRAIN",
+
+"WAITING_BUS","WAITING_PULLMAN","WAITING_TRAIN",
+
+"TIME_BUS","TIME_PULLMAN","TIME_TRAIN",
+
+"COST_BUS","COST_PULLMAN","COST_TRAIN",
+
+"FREQUENCY_BUS","FREQUENCY_PULLMAN","FREQUENCY_TRAIN"
 )
 
 
