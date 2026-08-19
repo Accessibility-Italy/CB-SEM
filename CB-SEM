@@ -30,32 +30,32 @@ library(tidyr)
 path <- file.choose()
 
 data_2023 <- read.delim(
-path,
-header = TRUE,
-stringsAsFactors = FALSE,
-check.names = FALSE
+  path,
+  header = TRUE,
+  stringsAsFactors = FALSE,
+  check.names = FALSE
 )
 
 
 data_clean <- data_2023 %>%
-mutate(
-across(
-c(TRAF, PARCH, CRIM),
- ~ ifelse(. == 5, NA, .)
+  mutate(
+    across(
+      c(TRAF, PARCH, CRIM),
+      ~ ifelse(. == 5, NA, .)
     )
   )
 
 data_clean[c(
-"FARMA", "PRSOC", "UFFPO", "POLICE",
-"UFFCOM", "MERCAT", "SMERC"
+  "FARMA", "PRSOC", "UFFPO", "POLICE",
+  "UFFCOM", "MERCAT", "SMERC"
 )] <- lapply(
-data_clean[c(
-"FARMA", "PRSOC", "UFFPO", "POLICE",
-"UFFCOM", "MERCAT", "SMERC"
-)],
-function(x) {
-x[x %in% c(4, 5)] <- NA
-x
+  data_clean[c(
+    "FARMA", "PRSOC", "UFFPO", "POLICE",
+    "UFFCOM", "MERCAT", "SMERC"
+  )],
+  function(x) {
+    x[x %in% c(4, 5)] <- NA
+    x
   }
 )
 
@@ -63,107 +63,107 @@ x
 data_clean_recoded <- data_clean
 
 data_clean_recoded[c(
-"FARMA", "PRSOC", "UFFPO", "POLICE",
-"UFFCOM", "MERCAT", "SMERC"
+  "FARMA", "PRSOC", "UFFPO", "POLICE",
+  "UFFCOM", "MERCAT", "SMERC"
 )] <- lapply(
-data_clean_recoded[c(
-"FARMA", "PRSOC", "UFFPO", "POLICE",
-"UFFCOM", "MERCAT", "SMERC"
-)],
-function(x) ifelse(x == 4, 0, 4 - x)
+  data_clean_recoded[c(
+    "FARMA", "PRSOC", "UFFPO", "POLICE",
+    "UFFCOM", "MERCAT", "SMERC"
+  )],
+  function(x) ifelse(x == 4, 0, 4 - x)
 )
 
 
 data_scaled <- data_clean_recoded
 
 summary_data <- data_scaled %>%
-rename(
-CONGE = TRAF,
-PARKI = PARCH,
-TRUS3 = PUNTIFI10,
-TRUS1 = PUNTIFI1,
-TRUS2 = PUNTIFI8,
+  rename(
+    CONGE = TRAF,
+    PARKI = PARCH,
+    TRUS3 = PUNTIFI10,
+    TRUS1 = PUNTIFI1,
+    TRUS2 = PUNTIFI8,
     
-AFFO1 = RISEC,
-AFFO2 = SITE,
+    AFFO1 = RISEC,
+    AFFO2 = SITE,
     
-HAPPI = SF15,
-RELAX = SF9,
-SADNE = SF11,
-AGITA = SF13,
-DESPO = SF14,
+    HAPPI = SF15,
+    RELAX = SF9,
+    SADNE = SF11,
+    AGITA = SF13,
+    DESPO = SF14,
     
-HEALT = PRSOC,
-SECUR = POLICE,
-ADMIN = UFFCOM,
-FOOD  = SMERC,
-MEDIC = FARMA,
-COMMU = UFFPO,
-MARKE = MERCAT,
-CRIMI = CRIM,
+    HEALT = PRSOC,
+    SECUR = POLICE,
+    ADMIN = UFFCOM,
+    FOOD  = SMERC,
+    MEDIC = FARMA,
+    COMMU = UFFPO,
+    MARKE = MERCAT,
+    CRIMI = CRIM,
     
-Connection_BUS     = COLLEG,
-Connection_PULLMAN = COLCO,
-Connection_TRAIN   = COLCOM,
+    Connection_BUS     = COLLEG,
+    Connection_PULLMAN = COLCO,
+    Connection_TRAIN   = COLCOM,
     
-CLEAN_BUS     = PULIZ,
-CLEAN_PULLMAN = PULMT,
-CLEAN_TRAIN   = PULSTR,
+    CLEAN_BUS     = PULIZ,
+    CLEAN_PULLMAN = PULMT,
+    CLEAN_TRAIN   = PULSTR,
     
-SPEED_BUS     = VELCO,
-SPEED_PULLMAN = VELMT,
-SPEED_TRAIN   = VETRE,
+    SPEED_BUS     = VELCO,
+    SPEED_PULLMAN = VELMT,
+    SPEED_TRAIN   = VETRE,
     
-PUNCTUALITY_BUS     = PUNT,
-PUNCTUALITY_PULLMAN = PUNMT,
-PUNCTUALITY_TRAIN   = PUTRE,
+    PUNCTUALITY_BUS     = PUNT,
+    PUNCTUALITY_PULLMAN = PUNMT,
+    PUNCTUALITY_TRAIN   = PUTRE,
     
-SEATS_BUS     = POSSE,
-SEATS_PULLMAN = SEDMT,
-SEATS_TRAIN   = PSTRE,
+    SEATS_BUS     = POSSE,
+    SEATS_PULLMAN = SEDMT,
+    SEATS_TRAIN   = PSTRE,
     
-WAITING_BUS     = COMOF,
-WAITING_PULLMAN = ATTMT,
-WAITING_TRAIN   = COMAT,
+    WAITING_BUS     = COMOF,
+    WAITING_PULLMAN = ATTMT,
+    WAITING_TRAIN   = COMAT,
     
-TIME_BUS     = COMOR,
-TIME_PULLMAN = ORAMT,
-TIME_TRAIN   = COMORA,
+    TIME_BUS     = COMOR,
+    TIME_PULLMAN = ORAMT,
+    TIME_TRAIN   = COMORA,
     
-COST_BUS     = CPSBI,
-COST_PULLMAN = CBMT,
-COST_TRAIN   = COBIG,
+    COST_BUS     = CPSBI,
+    COST_PULLMAN = CBMT,
+    COST_TRAIN   = COBIG,
     
-FREQUENCY_BUS     = FCORS,
-FREQUENCY_PULLMAN = FRCMT,
-FREQUENCY_TRAIN   = FRTRE
+    FREQUENCY_BUS     = FCORS,
+    FREQUENCY_PULLMAN = FRCMT,
+    FREQUENCY_TRAIN   = FRTRE
   )%>%
-
-mutate(
-    
-REGION = factor(
-ifelse(RIPMf == 9, NA, RIPMf),
-levels = 1:5
-),
-    
-SEX = factor(
-SESSO,
-levels = c(1, 2)
-),
-    
-AGE = factor(
-ETAMi,
-ordered = TRUE
- ),
-    
-EDUCATION = factor(
-ifelse(ISTRMi == 99, NA, ISTRMi),
-ordered = TRUE
- )
-    
-) %>%
   
-filter(!is.na(REGION))
+  mutate(
+    
+    REGION = factor(
+      ifelse(RIPMf == 9, NA, RIPMf),
+      levels = 1:5
+    ),
+    
+    SEX = factor(
+      SESSO,
+      levels = c(1, 2)
+    ),
+    
+    AGE = factor(
+      ETAMi,
+      ordered = TRUE
+    ),
+    
+    EDUCATION = factor(
+      ifelse(ISTRMi == 99, NA, ISTRMi),
+      ordered = TRUE
+    )
+    
+  ) %>%
+  
+  filter(!is.na(REGION))
 
 
 qualitative_vars <- c(
@@ -195,45 +195,45 @@ qualitative_vars <- c(
 
 frequency_table <- function(data, var) {
   
-x <- data[[var]]
+  x <- data[[var]]
   
-valid_n <- sum(!is.na(x))
+  valid_n <- sum(!is.na(x))
   
-missing_n <- sum(is.na(x))
+  missing_n <- sum(is.na(x))
   
-missing_pct <- round(
-(missing_n / length(x)) * 100,
-2
-)
-  
-valid_table <- as.data.frame(
-table(x, useNA = "no")
+  missing_pct <- round(
+    (missing_n / length(x)) * 100,
+    2
   )
   
-names(valid_table) <- c("Category", "Frequency")  
-valid_table %>%
-mutate(
-Variable = var,
-Percentage = round(
-(Frequency / valid_n) * 100,
-2
-),
-Missing_n = missing_n
-) %>%
-dplyr::select(
-Variable,
-Category,
-Frequency,
-Percentage,
-Missing_n
-)
+  valid_table <- as.data.frame(
+    table(x, useNA = "no")
+  )
+  
+  names(valid_table) <- c("Category", "Frequency")  
+  valid_table %>%
+    mutate(
+      Variable = var,
+      Percentage = round(
+        (Frequency / valid_n) * 100,
+        2
+      ),
+      Missing_n = missing_n
+    ) %>%
+    dplyr::select(
+      Variable,
+      Category,
+      Frequency,
+      Percentage,
+      Missing_n
+    )
 }
 
 
 
 qualitative_table <- purrr::map_dfr(
-qualitative_vars,
-~ frequency_table(summary_data, .x)
+  qualitative_vars,
+  ~ frequency_table(summary_data, .x)
 )
 
 
@@ -251,68 +251,68 @@ cfa_data <- summary_data[-indices, ]
 
 
 qualitative_vars <- c(
-"CONGE","PARKI","TRUS3","TRUS1","TRUS2",
-"HAPPI","RELAX","SADNE",
-"AGITA","DESPO","HEALT","SECUR","ADMIN",
-"FOOD","MEDIC","COMMU","MARKE","CRIMI",
-"REGION","SEX","AGE","EDUCATION",    "Connection_BUS","Connection_PULLMAN","Connection_TRAIN",
-
-"CLEAN_BUS","CLEAN_PULLMAN","CLEAN_TRAIN",
-
-"SPEED_BUS","SPEED_PULLMAN","SPEED_TRAIN",
-
-"PUNCTUALITY_BUS","PUNCTUALITY_PULLMAN","PUNCTUALITY_TRAIN",
-
-"SEATS_BUS","SEATS_PULLMAN","SEATS_TRAIN",
-
-"WAITING_BUS","WAITING_PULLMAN","WAITING_TRAIN",
-
-"TIME_BUS","TIME_PULLMAN","TIME_TRAIN",
-
-"COST_BUS","COST_PULLMAN","COST_TRAIN",
-
-"FREQUENCY_BUS","FREQUENCY_PULLMAN","FREQUENCY_TRAIN"
+  "CONGE","PARKI","TRUS3","TRUS1","TRUS2",
+  "HAPPI","RELAX","SADNE",
+  "AGITA","DESPO","HEALT","SECUR","ADMIN",
+  "FOOD","MEDIC","COMMU","MARKE","CRIMI",
+  "REGION","SEX","AGE","EDUCATION",    "Connection_BUS","Connection_PULLMAN","Connection_TRAIN",
+  
+  "CLEAN_BUS","CLEAN_PULLMAN","CLEAN_TRAIN",
+  
+  "SPEED_BUS","SPEED_PULLMAN","SPEED_TRAIN",
+  
+  "PUNCTUALITY_BUS","PUNCTUALITY_PULLMAN","PUNCTUALITY_TRAIN",
+  
+  "SEATS_BUS","SEATS_PULLMAN","SEATS_TRAIN",
+  
+  "WAITING_BUS","WAITING_PULLMAN","WAITING_TRAIN",
+  
+  "TIME_BUS","TIME_PULLMAN","TIME_TRAIN",
+  
+  "COST_BUS","COST_PULLMAN","COST_TRAIN",
+  
+  "FREQUENCY_BUS","FREQUENCY_PULLMAN","FREQUENCY_TRAIN"
 )
 
 
 frequency_table <- function(data, var) {
   
-x <- data[[var]]
+  x <- data[[var]]
   
-valid_n <- sum(!is.na(x))
-total_n <- length(x)
+  valid_n <- sum(!is.na(x))
+  total_n <- length(x)
   
-missing_n <- sum(is.na(x))
-missing_pct <- round((missing_n / total_n) * 100, 2)
+  missing_n <- sum(is.na(x))
+  missing_pct <- round((missing_n / total_n) * 100, 2)
   
-valid_table <- as.data.frame(table(x, useNA = "no"))
-names(valid_table) <- c("Category", "Frequency")
+  valid_table <- as.data.frame(table(x, useNA = "no"))
+  names(valid_table) <- c("Category", "Frequency")
   
-valid_table %>%
-mutate(
-Variable = var,
-Percentage = round((Frequency / valid_n) * 100, 2),
-Missing_n = missing_n
-) %>%
-dplyr::select(
-Variable,
-Category,
-Frequency,
-Percentage,
-Missing_n
-)
+  valid_table %>%
+    mutate(
+      Variable = var,
+      Percentage = round((Frequency / valid_n) * 100, 2),
+      Missing_n = missing_n
+    ) %>%
+    dplyr::select(
+      Variable,
+      Category,
+      Frequency,
+      Percentage,
+      Missing_n
+    )
 }
 
 
 efa_qualitative_table <- purrr::map_dfr(
-qualitative_vars,
- ~ frequency_table(efa_data, .x)
+  qualitative_vars,
+  ~ frequency_table(efa_data, .x)
 )
 
 
 cfa_qualitative_table <- purrr::map_dfr(
-qualitative_vars,
-~ frequency_table(cfa_data, .x)
+  qualitative_vars,
+  ~ frequency_table(cfa_data, .x)
 )
 
 
@@ -330,72 +330,72 @@ datiR_2023 <- read.delim(path, header = TRUE, stringsAsFactors = FALSE, check.na
 
 
 avq_clean1 <- datiR_2023 %>%
-mutate(across(c(TRAF, PARCH, CRIM),
-~ ifelse(. == 5, NA, .)))
+  mutate(across(c(TRAF, PARCH, CRIM),
+                ~ ifelse(. == 5, NA, .)))
 
 avq_clean1[c("FARMA", "PRSOC", "UFFPO", "POLICE", "UFFCOM", "MERCAT", "SMERC")] <-
-lapply(avq_clean1[c("FARMA", "PRSOC", "UFFPO", "POLICE", "UFFCOM", "MERCAT", "SMERC")],
-function(x) ifelse(x == 4, 0, 4 - x))
+  lapply(avq_clean1[c("FARMA", "PRSOC", "UFFPO", "POLICE", "UFFCOM", "MERCAT", "SMERC")],
+         function(x) ifelse(x == 4, 0, 4 - x))
 
 
 invert_then_normalize <- function(x) {
-if (all(is.na(x))) return(rep(NA, length(x)))
-inv_x <- max(x, na.rm = TRUE) - x
-rng <- range(inv_x, na.rm = TRUE)
-(inv_x - rng[1]) / diff(rng)
+  if (all(is.na(x))) return(rep(NA, length(x)))
+  inv_x <- max(x, na.rm = TRUE) - x
+  rng <- range(inv_x, na.rm = TRUE)
+  (inv_x - rng[1]) / diff(rng)
 }
 
 avq_scaled <- avq_clean1 %>%
-mutate(across(
-c(COLLEG, COLCO, COLCOM,
-FRCMT, PUNMT, SEDMT, VELMT, PULMT, ATTMT, ORAMT, CBMT, INFMT,
-FRTRE, PUTRE, PSTRE, VETRE, PULSTR, COMAT, COMORA, COBIG, INFTR,
-FCORS, PUNT, POSSE, VELCO, PULIZ, COMOF, COMOR , CPSBI , SITE ),
-invert_then_normalize,
-.names = "norm_inv_{col}"
+  mutate(across(
+    c(COLLEG, COLCO, COLCOM,
+      FRCMT, PUNMT, SEDMT, VELMT, PULMT, ATTMT, ORAMT, CBMT, INFMT,
+      FRTRE, PUTRE, PSTRE, VETRE, PULSTR, COMAT, COMORA, COBIG, INFTR,
+      FCORS, PUNT, POSSE, VELCO, PULIZ, COMOF, COMOR , CPSBI , SITE ),
+    invert_then_normalize,
+    .names = "norm_inv_{col}"
   ))
 
 
 invert_then_normalize <- function(x, min_val = 1, max_val = 5) {
-if (all(is.na(x))) return(rep(NA, length(x)))
+  if (all(is.na(x))) return(rep(NA, length(x)))
   
-x_inv <- max_val + min_val - x
+  x_inv <- max_val + min_val - x
   
-(x_inv - min(x_inv, na.rm = TRUE)) / (max(x_inv, na.rm = TRUE) - min(x_inv, na.rm = TRUE))
+  (x_inv - min(x_inv, na.rm = TRUE)) / (max(x_inv, na.rm = TRUE) - min(x_inv, na.rm = TRUE))
 }
 
 avq_scaled <- avq_scaled %>%
-mutate(across(
-c("RISEC"),
-~invert_then_normalize(.x, min_val = 1, max_val = 5),
-.names = "norm_inv_{col}"
-))
+  mutate(across(
+    c("RISEC"),
+    ~invert_then_normalize(.x, min_val = 1, max_val = 5),
+    .names = "norm_inv_{col}"
+  ))
 
 
 invert_then_normalize <- function(x, min_val = 1, max_val = 6) {
-if (all(is.na(x))) return(rep(NA, length(x)))
+  if (all(is.na(x))) return(rep(NA, length(x)))
   
-x_inv <- max_val + min_val - x
+  x_inv <- max_val + min_val - x
   
-(x_inv - min(x_inv, na.rm = TRUE)) / (max(x_inv, na.rm = TRUE) - min(x_inv, na.rm = TRUE))
+  (x_inv - min(x_inv, na.rm = TRUE)) / (max(x_inv, na.rm = TRUE) - min(x_inv, na.rm = TRUE))
 }
 
 avq_scaled <- avq_scaled %>%
-mutate(across(
-c("SF9", "SF15"),
-~invert_then_normalize(.x, min_val = 1, max_val = 6),
-.names = "norm_inv_{col}"
+  mutate(across(
+    c("SF9", "SF15"),
+    ~invert_then_normalize(.x, min_val = 1, max_val = 6),
+    .names = "norm_inv_{col}"
   ))
 
 
 normalize <- function(x) {
-rng <- range(x, na.rm = TRUE)
-(x - rng[1]) / diff(rng)
+  rng <- range(x, na.rm = TRUE)
+  (x - rng[1]) / diff(rng)
 }
 
 avq_scaled <- avq_scaled %>%
-mutate(across(c(PUNTIFI10, SF11, SF13, SF14, PUNTIFI8, CRIM, PUNTIFI1, TRAF, PARCH, FARMA, PRSOC, UFFPO, POLICE, UFFCOM, MERCAT, SMERC ),
-normalize, .names = "norm_{col}"))
+  mutate(across(c(PUNTIFI10, SF11, SF13, SF14, PUNTIFI8, CRIM, PUNTIFI1, TRAF, PARCH, FARMA, PRSOC, UFFPO, POLICE, UFFCOM, MERCAT, SMERC ),
+                normalize, .names = "norm_{col}"))
 
 
 avq_scaled$Connection <- rowMeans(avq_scaled[, c( "norm_inv_COLLEG", "norm_inv_COLCO", "norm_inv_COLCOM")], na.rm = TRUE)
@@ -410,62 +410,62 @@ avq_scaled$IND_FREQUENCY <- rowMeans(avq_scaled[, c("norm_inv_FCORS", "norm_inv_
 
 
 rename_vec <- c(
-FREQU = "IND_FREQUENCY",
-WAITI = "IND_WAITING",
-SPEED = "IND_SPEED",
-SEATS = "IND_SEATS",
-TIME = "IND_TIME",
-COST = "IND_COST",
-PUNCT = "IND_PUNCTUALITY",
-CLEAN = "IND_CLEAN",
-CONNE = "Connection",
-CONGE = "norm_TRAF",
-PARKI = "norm_PARCH",
-TRUS3 = "norm_PUNTIFI10",
-TRUS1 = "norm_PUNTIFI1",
-TRUS2 = "norm_PUNTIFI8",
-AFFO1 = "norm_inv_RISEC",
-AFFO2 = "norm_inv_SITE",
-HAPPI = "norm_inv_SF15",
-RELAX = "norm_inv_SF9",
-SADNE = "norm_SF11",
-AGITA = "norm_SF13",
-DESPO = "norm_SF14",
-HEALT = "norm_PRSOC",
-SECUR = "norm_POLICE",
-ADMIN = "norm_UFFCOM",
-FOOD = "norm_SMERC",
-MEDIC = "norm_FARMA",
-COMMU = "norm_UFFPO",
-MARKE = "norm_MERCAT",
-CRIMI = "norm_CRIM"
+  FREQU = "IND_FREQUENCY",
+  WAITI = "IND_WAITING",
+  SPEED = "IND_SPEED",
+  SEATS = "IND_SEATS",
+  TIME = "IND_TIME",
+  COST = "IND_COST",
+  PUNCT = "IND_PUNCTUALITY",
+  CLEAN = "IND_CLEAN",
+  CONNE = "Connection",
+  CONGE = "norm_TRAF",
+  PARKI = "norm_PARCH",
+  TRUS3 = "norm_PUNTIFI10",
+  TRUS1 = "norm_PUNTIFI1",
+  TRUS2 = "norm_PUNTIFI8",
+  AFFO1 = "norm_inv_RISEC",
+  AFFO2 = "norm_inv_SITE",
+  HAPPI = "norm_inv_SF15",
+  RELAX = "norm_inv_SF9",
+  SADNE = "norm_SF11",
+  AGITA = "norm_SF13",
+  DESPO = "norm_SF14",
+  HEALT = "norm_PRSOC",
+  SECUR = "norm_POLICE",
+  ADMIN = "norm_UFFCOM",
+  FOOD = "norm_SMERC",
+  MEDIC = "norm_FARMA",
+  COMMU = "norm_UFFPO",
+  MARKE = "norm_MERCAT",
+  CRIMI = "norm_CRIM"
 )
 
 
 avq_scaled_renamed <- avq_scaled %>%
-rename(!!!rename_vec)
+  rename(!!!rename_vec)
 
 avq_scaled_renamed <- avq_scaled_renamed %>%
-mutate(
-REG = factor(
-ifelse(RIPMf == 9, NA, RIPMf),
-levels = 1:5
-),
+  mutate(
+    REG = factor(
+      ifelse(RIPMf == 9, NA, RIPMf),
+      levels = 1:5
+    ),
     
-SEX = ifelse(SESSO == 2, 1, 0),
+    SEX = ifelse(SESSO == 2, 1, 0),
     
-AGE = as.numeric(ordered(ETAMi)),
-
-EDU = as.numeric(
-  ordered(
-    ifelse(ISTRMi == 99, NA, ISTRMi),
-    levels = c(10, 9, 7, 1)
-  ))) %>%
+    AGE = as.numeric(ordered(ETAMi)),
+    
+    EDU = as.numeric(
+      ordered(
+        ifelse(ISTRMi == 99, NA, ISTRMi),
+        levels = c(10, 9, 7, 1)
+      ))) %>%
   filter(!is.na(REG))
 
 efa_variables <- c("AFFO1", "AFFO2", "CRIMI", "WAITI","SPEED", "SEATS","TIME","COST","PUNCT","CLEAN","CONNE", "FREQU",
                    "CONGE","PARKI","TRUS3", "TRUS1","TRUS2",
-                    "RELAX","SADNE","AGITA","DESPO","HAPPI",
+                   "RELAX","SADNE","AGITA","DESPO","HAPPI",
                    "HEALT","SECUR","ADMIN","FOOD", "MEDIC", "COMMU", "MARKE",
                    "AGE", "EDU", "SEX", "REG")
 
@@ -492,23 +492,23 @@ psych::describe(efa_sample2)[, c("skew", "kurtosis")]
 iteration <- 0
 
 repeat {
-iteration <- iteration + 1
+  iteration <- iteration + 1
   
-md <- mahalanobis(efa_sample2, colMeans(efa_sample2), cov(efa_sample2))
-max_md <- max(md)
-  
-  
-cat("", iteration, "-Mahalanobis:", max_md, "\n")
-cat("Critical value:", chi_crit, "\n")
-  
-if(max_md < chi_crit){
-cat("Max value is below critical value. Stop.\n")
-break
-}
+  md <- mahalanobis(efa_sample2, colMeans(efa_sample2), cov(efa_sample2))
+  max_md <- max(md)
   
   
-max_index <- which.max(md)
-efa_sample2 <- efa_sample2[-max_index, ]
+  cat("", iteration, "-Mahalanobis:", max_md, "\n")
+  cat("Critical value:", chi_crit, "\n")
+  
+  if(max_md < chi_crit){
+    cat("Max value is below critical value. Stop.\n")
+    break
+  }
+  
+  
+  max_index <- which.max(md)
+  efa_sample2 <- efa_sample2[-max_index, ]
 }
 
 cat("\nFinal number of osservations:", nrow(efa_sample2), "\n")
@@ -519,28 +519,28 @@ psych::describe(efa_sample2)[, c("skew", "kurtosis")]
 
 #VIF (Bhale and Harpreet, 2024)
 variables <- c(variables <- c("AFFO1", "AFFO2", "CRIMI", "WAITI","SPEED", "SEATS","TIME","COST","PUNCT","CLEAN","CONNE", "FREQU",
-"CONGE","PARKI","TRUS3", "TRUS1","TRUS2",
-"RELAX","SADNE","AGITA","DESPO","HAPPI",
-"HEALT","SECUR","ADMIN","FOOD", "MEDIC", "COMMU", "MARKE"
- )
+                              "CONGE","PARKI","TRUS3", "TRUS1","TRUS2",
+                              "RELAX","SADNE","AGITA","DESPO","HAPPI",
+                              "HEALT","SECUR","ADMIN","FOOD", "MEDIC", "COMMU", "MARKE"
+)
 )
 calc_all_vif <- function(data, variables) {
-vif_results <- numeric(length(variables))
-names(vif_results) <- variables
+  vif_results <- numeric(length(variables))
+  names(vif_results) <- variables
   
-for (var in variables) {
-predictors <- setdiff(variables, var)
-formula <- as.formula(paste(var, "~", paste(predictors, collapse = " + ")))
-lm_model <- lm(formula, data = data)
+  for (var in variables) {
+    predictors <- setdiff(variables, var)
+    formula <- as.formula(paste(var, "~", paste(predictors, collapse = " + ")))
+    lm_model <- lm(formula, data = data)
     
     
-r2 <- summary(lm_model)$r.squared
+    r2 <- summary(lm_model)$r.squared
     
     
-vif_results[var] <- 1 / (1 - r2)
-}
+    vif_results[var] <- 1 / (1 - r2)
+  }
   
-return(vif_results)
+  return(vif_results)
 }
 
 
@@ -585,7 +585,11 @@ cat("Number of factors (Parallel Analysis):", pa_res$Retained, "\n")
 
 Nfacs <- pa_res$Retained
 
+# EFA (Murphy, 2021)
+set.seed(123)
+efa_fit <- factanal(efa_sample2, factors = Nfacs, rotation = "promax")
 
+print(efa_fit, digits = 2, cutoff = 0.3, sort = TRUE)
 
 # EFA (Murphy, 2021)
 
@@ -596,31 +600,31 @@ efa_fit <- factanal(efa_sample2, factors = Nfacs, rotation = "promax")
 print(efa_fit, digits = 2, cutoff = 0.3, sort = TRUE)
 
 avq_scaled_renamed <- avq_scaled %>%
-rename(!!!rename_vec)
+  rename(!!!rename_vec)
 
 avq_scaled_renamed <- avq_scaled_renamed %>%
-mutate(
-REG = factor(
-ifelse(RIPMf == 9, NA, RIPMf),
-levels = 1:5
-),
+  mutate(
+    REG = factor(
+      ifelse(RIPMf == 9, NA, RIPMf),
+      levels = 1:5
+    ),
     
-SEX = ifelse(SESSO == 2, 1, 0),
+    SEX = ifelse(SESSO == 2, 1, 0),
     
-AGE = as.numeric(ordered(ETAMi)),
+    AGE = as.numeric(ordered(ETAMi)),
     
-EDU = as.numeric(
-ordered(
-ifelse(ISTRMi == 99, NA, ISTRMi),
-levels = c(10, 9, 7, 1)
-))) %>%
-filter(!is.na(REG))
+    EDU = as.numeric(
+      ordered(
+        ifelse(ISTRMi == 99, NA, ISTRMi),
+        levels = c(10, 9, 7, 1)
+      ))) %>%
+  filter(!is.na(REG))
 
 efa_variables <- c("CRIMI", "WAITI","SPEED", "SEATS","TIME","COST","PUNCT","CLEAN","CONNE", "FREQU",
-"CONGE","PARKI","TRUS3", "TRUS1","TRUS2",
-"RELAX","SADNE","AGITA","DESPO","HAPPI",
-"HEALT","SECUR","ADMIN","FOOD", "MEDIC", "COMMU", "MARKE",
-"AGE", "EDU", "SEX", "REG")
+                   "CONGE","PARKI","TRUS3", "TRUS1","TRUS2",
+                   "RELAX","SADNE","AGITA","DESPO","HAPPI",
+                   "HEALT","SECUR","ADMIN","FOOD", "MEDIC", "COMMU", "MARKE",
+                   "AGE", "EDU", "SEX", "REG")
 
 set.seed(123)
 
@@ -646,23 +650,23 @@ efa_sample2 <- efa_clean
 iteration <- 0
 
 repeat {
-iteration <- iteration + 1
+  iteration <- iteration + 1
   
-md <- mahalanobis(efa_sample2, colMeans(efa_sample2), cov(efa_sample2))
-max_md <- max(md)
-  
-  
-cat("", iteration, "- Mahalanobis:", max_md, "\n")
-cat("Critical value:", chi_crit, "\n")
-  
-if(max_md < chi_crit){
-cat("Max value is below critical value. Stop.\n")
-break
-}
+  md <- mahalanobis(efa_sample2, colMeans(efa_sample2), cov(efa_sample2))
+  max_md <- max(md)
   
   
-max_index <- which.max(md)
-efa_sample2 <- efa_sample2[-max_index, ]
+  cat("", iteration, "- Mahalanobis:", max_md, "\n")
+  cat("Critical value:", chi_crit, "\n")
+  
+  if(max_md < chi_crit){
+    cat("Max value is below critical value. Stop.\n")
+    break
+  }
+  
+  
+  max_index <- which.max(md)
+  efa_sample2 <- efa_sample2[-max_index, ]
 }
 
 cat("\nFinal number of osservations:", nrow(efa_sample2), "\n")
@@ -674,28 +678,28 @@ psych::describe(efa_sample2)[, c("skew", "kurtosis")]
 
 #VIF (Bhale and Harpreet, 2024)
 variables <- c(variables <- c("CRIMI", "WAITI","SPEED", "SEATS","TIME","COST","PUNCT","CLEAN","CONNE", "FREQU",
-"CONGE","PARKI","TRUS3", "TRUS1","TRUS2",
-"RELAX","SADNE","AGITA","DESPO","HAPPI",
-"HEALT","SECUR","ADMIN","FOOD", "MEDIC", "COMMU", "MARKE"
+                              "CONGE","PARKI","TRUS3", "TRUS1","TRUS2",
+                              "RELAX","SADNE","AGITA","DESPO","HAPPI",
+                              "HEALT","SECUR","ADMIN","FOOD", "MEDIC", "COMMU", "MARKE"
 )
 )
 calc_all_vif <- function(data, variables) {
-vif_results <- numeric(length(variables))
-names(vif_results) <- variables
+  vif_results <- numeric(length(variables))
+  names(vif_results) <- variables
   
-for (var in variables) {
-predictors <- setdiff(variables, var)
-formula <- as.formula(paste(var, "~", paste(predictors, collapse = " + ")))
-lm_model <- lm(formula, data = data)
+  for (var in variables) {
+    predictors <- setdiff(variables, var)
+    formula <- as.formula(paste(var, "~", paste(predictors, collapse = " + ")))
+    lm_model <- lm(formula, data = data)
     
     
-r2 <- summary(lm_model)$r.squared
+    r2 <- summary(lm_model)$r.squared
     
     
-vif_results[var] <- 1 / (1 - r2)
-}
+    vif_results[var] <- 1 / (1 - r2)
+  }
   
-return(vif_results)
+  return(vif_results)
 }
 
 
@@ -718,7 +722,7 @@ cortest.bartlett(efa_sample2)
 ev <- eigen(cor(efa_sample2))
 num_factors_kaiser <- sum(ev$values > 1)
 cat("Number of factors (Kaiser):", num_factors_kaiser, "\n")
- 
+
 
 par(mar = c(5, 5, 4, 2))  
 scree(efa_sample2, pc = FALSE)
@@ -747,30 +751,30 @@ print(efa_fit, digits = 2, cutoff = 0.3, sort = TRUE)
 
 
 Satisfaction <- efa_sample2[, c(
-"WAITI", "SPEED", "SEATS", "TIME", "COST",
-"CONNE", "PUNCT", "CLEAN", "FREQU"
+  "WAITI", "SPEED", "SEATS", "TIME", "COST",
+  "CONNE", "PUNCT", "CLEAN", "FREQU"
 )]
 
 # Viability
 viability <- efa_sample2[, c(
-"CONGE", "PARKI", "CRIMI"
+  "CONGE", "PARKI", "CRIMI"
 )]
 
 # Administration
 Administration <- efa_sample2[, c(
-"TRUS3", "TRUS1", "TRUS2"
+  "TRUS3", "TRUS1", "TRUS2"
 )]
 
 # Health
 health <- efa_sample2[, c(
-"HAPPI", "RELAX", "SADNE",
-"AGITA", "DESPO"
+  "HAPPI", "RELAX", "SADNE",
+  "AGITA", "DESPO"
 )]
 
 # Accessibility
 Accessibility <- efa_sample2[, c(
-"HEALT", "SECUR", "ADMIN",
-"FOOD", "MEDIC", "COMMU", "MARKE"
+  "HEALT", "SECUR", "ADMIN",
+  "FOOD", "MEDIC", "COMMU", "MARKE"
 )]
 
 # Cronbach's alpha
@@ -807,27 +811,27 @@ lavInspect(fit_measurement, what = "cor.lv")^2
 psych::describe(cfa_sample)[, c("skew", "kurtosis")]
 #VIF (Bhale and Harpreet, 2024)
 variables2 <- c(variables2 <- c("CRIMI", "WAITI","SPEED", "SEATS","TIME","COST","PUNCT","CLEAN","CONNE", "FREQU",
-"CONGE","PARKI","TRUS3", "TRUS1","TRUS2",
-"RELAX","SADNE","AGITA","DESPO","HAPPI",
-"HEALT","SECUR","ADMIN","FOOD", "MEDIC", "COMMU", "MARKE")
+                                "CONGE","PARKI","TRUS3", "TRUS1","TRUS2",
+                                "RELAX","SADNE","AGITA","DESPO","HAPPI",
+                                "HEALT","SECUR","ADMIN","FOOD", "MEDIC", "COMMU", "MARKE")
 )
 calc_all_vif <- function(data, variables2) {
-vif_results <- numeric(length(variables2))
-names(vif_results) <- variables2
+  vif_results <- numeric(length(variables2))
+  names(vif_results) <- variables2
   
-for (var in variables2) {
-predictors <- setdiff(variables2, var)
-formula <- as.formula(paste(var, "~", paste(predictors, collapse = " + ")))
-lm_model <- lm(formula, data = data)
+  for (var in variables2) {
+    predictors <- setdiff(variables2, var)
+    formula <- as.formula(paste(var, "~", paste(predictors, collapse = " + ")))
+    lm_model <- lm(formula, data = data)
     
     
-r2 <- summary(lm_model)$r.squared
+    r2 <- summary(lm_model)$r.squared
     
     
-vif_results[var] <- 1 / (1 - r2)
-}
+    vif_results[var] <- 1 / (1 - r2)
+  }
   
-return(vif_results)
+  return(vif_results)
 }
 
 
@@ -841,8 +845,8 @@ num_data_noctrl <- cfa_sample[, !(names(cfa_sample) %in% controls)]
 num_data_noctrl <- data.frame(lapply(num_data_noctrl, as.numeric))
 
 corr_res_spearman <- corr.test(
-as.matrix(num_data_noctrl),
-method = "spearman"
+  as.matrix(num_data_noctrl),
+  method = "spearman"
 )
 
 
@@ -854,30 +858,30 @@ print(corr_res_spearman$p)
 
 
 Satisfaction <- cfa_sample[, c(
-"WAITI", "SPEED", "SEATS", "TIME", "COST",
-"CONNE", "PUNCT", "CLEAN", "FREQU"
+  "WAITI", "SPEED", "SEATS", "TIME", "COST",
+  "CONNE", "PUNCT", "CLEAN", "FREQU"
 )]
 
 # Viability
 viability <- cfa_sample[, c(
-"CONGE", "PARKI", "CRIMI"
+  "CONGE", "PARKI", "CRIMI"
 )]
 
 # Administration
 Administration <- cfa_sample[, c(
-"TRUS3", "TRUS1", "TRUS2"
+  "TRUS3", "TRUS1", "TRUS2"
 )]
 
 # Health
 health <- cfa_sample[, c(
-"HAPPI", "RELAX", "SADNE",
-"AGITA", "DESPO"
+  "HAPPI", "RELAX", "SADNE",
+  "AGITA", "DESPO"
 )]
 
 # Accessibility
 Accessibility <- cfa_sample[, c(
-"HEALT", "SECUR", "ADMIN",
-"FOOD", "MEDIC", "COMMU", "MARKE"
+  "HEALT", "SECUR", "ADMIN",
+  "FOOD", "MEDIC", "COMMU", "MARKE"
 )]
 
 # Cronbach's alpha
@@ -927,9 +931,6 @@ fit_multi <- sem(
 summary(fit_multi, standardized=TRUE, fit.measures=TRUE)
 fitMeasures(fit_multi)
 
-
-
-
 library(psych)
 library(dplyr)
 library(tibble)
@@ -938,26 +939,26 @@ library(tibble)
 
 # Plot (Lishinski, 2024)
 lavaanPlot(model = fit_multi,
-node_options = list(shape = "box", fontname = "Helvetica", fontsize = 5),
-edge_options = list(color = "black", lty = 1, lwd = 1.5),
-coefs = TRUE,    
-stand = FALSE)  
+           node_options = list(shape = "box", fontname = "Helvetica", fontsize = 5),
+           edge_options = list(color = "black", lty = 1, lwd = 1.5),
+           coefs = TRUE,    
+           stand = FALSE)  
 
 semPlot::semPaths(
-fit_multi,
-what = "path",
-whatLabels = "none",
-layout = "tree",
-residuals = FALSE,
-intercepts = FALSE,
-exoCov = FALSE,
-edge.labels = FALSE,
-nCharNodes = 0,
-label.cex = 0.5,      
-label.scale = FALSE,   
-label.font = 1,
-sizeMan = 4,
-sizeLat = 13
+  fit_multi,
+  what = "path",
+  whatLabels = "none",
+  layout = "tree",
+  residuals = FALSE,
+  intercepts = FALSE,
+  exoCov = FALSE,
+  edge.labels = FALSE,
+  nCharNodes = 0,
+  label.cex = 0.5,      
+  label.scale = FALSE,   
+  label.font = 1,
+  sizeMan = 4,
+  sizeLat = 13
 )
 
 return()
